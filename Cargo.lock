@@ -369,6 +369,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
+ "tempfile",
  "zip 2.4.2",
 ]
 
@@ -421,6 +422,7 @@ dependencies = [
  "docli-schema",
  "quick-xml 0.36.2",
  "regex",
+ "roxmltree",
  "serde",
  "zip 2.4.2",
 ]
