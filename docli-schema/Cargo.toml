@@ -10,6 +10,9 @@ docli-core = { path = "../docli-core" }
 docli-query = { path = "../docli-query" }
 ooxmlsdk.workspace = true
 quick-xml.workspace = true
+roxmltree.workspace = true
 schemars.workspace = true
 serde.workspace = true
+tempfile.workspace = true
 thiserror.workspace = true
+zip.workspace = true

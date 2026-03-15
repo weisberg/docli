@@ -448,9 +448,12 @@ dependencies = [
  "docli-query",
  "ooxmlsdk",
  "quick-xml 0.36.2",
+ "roxmltree",
  "schemars",
  "serde",
+ "tempfile",
  "thiserror",
+ "zip 2.4.2",
 ]
 
 [[package]]
