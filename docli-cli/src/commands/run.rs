@@ -32,7 +32,7 @@ struct RunResult {
 }
 
 pub fn run(args: RunArgs, format: &str, pretty: bool) -> i32 {
-    let mut builder = EnvelopeBuilder::new("run");
+    let builder = EnvelopeBuilder::new("run");
 
     let job = match load_job(&args.job) {
         Ok(j) => j,

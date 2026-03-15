@@ -5,27 +5,41 @@ use serde::Serialize;
 
 use docli_core::{
     ContentBlock, Durability, EnvelopeBuilder, Job, Operation, ParagraphContent, PipelineHooks,
-    PipelineRequest, Position, Scope, Target,
+    PipelineRequest, Position, Target,
 };
 
 use crate::envelope::emit;
 
 #[derive(Subcommand)]
-pub enum EditCommand {
-    /// Replace targeted content with new text
-    Replace(ReplaceArgs),
-    /// Insert content before or after a target
-    Insert(InsertArgs),
-    /// Delete targeted content
-    Delete(DeleteArgs),
-    /// Find and replace text strings
-    FindReplace(FindReplaceArgs),
+pub enum ReviewCommand {
+    /// Add a comment to targeted content
+    Comment(CommentArgs),
+    /// Tracked replacement of targeted content
+    TrackReplace(TrackReplaceArgs),
+    /// Tracked insertion before or after a target
+    TrackInsert(TrackInsertArgs),
+    /// Tracked deletion of targeted content
+    TrackDelete(TrackDeleteArgs),
 }
 
-// ── Subcommand arg structs ──────────────────────────────────────────
+#[derive(Args)]
+pub struct CommentArgs {
+    /// Source DOCX file
+    #[arg(long = "in")]
+    input: PathBuf,
+    /// Output DOCX file
+    #[arg(long = "out")]
+    output: PathBuf,
+    /// Target selector (JSON)
+    #[arg(long)]
+    target: String,
+    /// Comment text
+    #[arg(long)]
+    text: String,
+}
 
 #[derive(Args)]
-pub struct ReplaceArgs {
+pub struct TrackReplaceArgs {
     /// Source DOCX file
     #[arg(long = "in")]
     input: PathBuf,
@@ -41,7 +55,7 @@ pub struct ReplaceArgs {
 }
 
 #[derive(Args)]
-pub struct InsertArgs {
+pub struct TrackInsertArgs {
     /// Source DOCX file
     #[arg(long = "in")]
     input: PathBuf,
@@ -60,7 +74,7 @@ pub struct InsertArgs {
 }
 
 #[derive(Args)]
-pub struct DeleteArgs {
+pub struct TrackDeleteArgs {
     /// Source DOCX file
     #[arg(long = "in")]
     input: PathBuf,
@@ -71,27 +85,6 @@ pub struct DeleteArgs {
     #[arg(long)]
     target: String,
 }
-
-#[derive(Args)]
-pub struct FindReplaceArgs {
-    /// Source DOCX file
-    #[arg(long = "in")]
-    input: PathBuf,
-    /// Output DOCX file
-    #[arg(long = "out")]
-    output: PathBuf,
-    /// Text to find
-    #[arg(long)]
-    find: String,
-    /// Replacement text
-    #[arg(long)]
-    replace: String,
-    /// Scope: all (default) or first
-    #[arg(long, default_value = "all")]
-    scope: ScopeArg,
-}
-
-// ── CLI-level enums that map to core types ──────────────────────────
 
 #[derive(Clone, ValueEnum)]
 pub enum PositionArg {
@@ -108,25 +101,8 @@ impl From<PositionArg> for Position {
     }
 }
 
-#[derive(Clone, ValueEnum)]
-pub enum ScopeArg {
-    All,
-    First,
-}
-
-impl From<ScopeArg> for Scope {
-    fn from(s: ScopeArg) -> Self {
-        match s {
-            ScopeArg::All => Scope::All,
-            ScopeArg::First => Scope::First,
-        }
-    }
-}
-
-// ── Result payload ──────────────────────────────────────────────────
-
 #[derive(Serialize)]
-struct EditResult {
+struct ReviewResult {
     source: String,
     output: String,
     operations: usize,
@@ -136,23 +112,51 @@ struct EditResult {
 
 // ── Dispatch ────────────────────────────────────────────────────────
 
-pub fn run(cmd: EditCommand, format: &str, pretty: bool) -> i32 {
+pub fn run(cmd: ReviewCommand, format: &str, pretty: bool) -> i32 {
     match cmd {
-        EditCommand::Replace(args) => {
+        ReviewCommand::Comment(args) => {
             let (input, output) = (args.input.clone(), args.output.clone());
-            run_job("edit.replace", &input, &output, build_replace(args), format, pretty)
+            run_job(
+                "review.comment",
+                &input,
+                &output,
+                build_comment(args),
+                format,
+                pretty,
+            )
         }
-        EditCommand::Insert(args) => {
+        ReviewCommand::TrackReplace(args) => {
             let (input, output) = (args.input.clone(), args.output.clone());
-            run_job("edit.insert", &input, &output, build_insert(args), format, pretty)
+            run_job(
+                "review.track-replace",
+                &input,
+                &output,
+                build_track_replace(args),
+                format,
+                pretty,
+            )
         }
-        EditCommand::Delete(args) => {
+        ReviewCommand::TrackInsert(args) => {
             let (input, output) = (args.input.clone(), args.output.clone());
-            run_job("edit.delete", &input, &output, build_delete(args), format, pretty)
+            run_job(
+                "review.track-insert",
+                &input,
+                &output,
+                build_track_insert(args),
+                format,
+                pretty,
+            )
         }
-        EditCommand::FindReplace(args) => {
+        ReviewCommand::TrackDelete(args) => {
             let (input, output) = (args.input.clone(), args.output.clone());
-            run_job("edit.find-replace", &input, &output, build_find_replace(args), format, pretty)
+            run_job(
+                "review.track-delete",
+                &input,
+                &output,
+                build_track_delete(args),
+                format,
+                pretty,
+            )
         }
     }
 }
@@ -163,20 +167,31 @@ fn parse_target(raw: &str) -> Result<Target, String> {
     serde_json::from_str(raw).map_err(|e| format!("invalid target selector JSON: {e}"))
 }
 
-fn build_replace(args: ReplaceArgs) -> Result<Job, String> {
+fn build_comment(args: CommentArgs) -> Result<Job, String> {
     let target = parse_target(&args.target)?;
     Ok(Job {
-        operations: vec![Operation::EditReplace {
+        operations: vec![Operation::ReviewComment {
+            target,
+            text: args.text,
+            parent: None,
+        }],
+    })
+}
+
+fn build_track_replace(args: TrackReplaceArgs) -> Result<Job, String> {
+    let target = parse_target(&args.target)?;
+    Ok(Job {
+        operations: vec![Operation::ReviewTrackReplace {
             target,
             content: args.content,
         }],
     })
 }
 
-fn build_insert(args: InsertArgs) -> Result<Job, String> {
+fn build_track_insert(args: TrackInsertArgs) -> Result<Job, String> {
     let target = parse_target(&args.target)?;
     Ok(Job {
-        operations: vec![Operation::EditInsert {
+        operations: vec![Operation::ReviewTrackInsert {
             target,
             position: args.position.into(),
             content: vec![ContentBlock::Paragraph {
@@ -186,20 +201,10 @@ fn build_insert(args: InsertArgs) -> Result<Job, String> {
     })
 }
 
-fn build_delete(args: DeleteArgs) -> Result<Job, String> {
+fn build_track_delete(args: TrackDeleteArgs) -> Result<Job, String> {
     let target = parse_target(&args.target)?;
     Ok(Job {
-        operations: vec![Operation::EditDelete { target }],
-    })
-}
-
-fn build_find_replace(args: FindReplaceArgs) -> Result<Job, String> {
-    Ok(Job {
-        operations: vec![Operation::EditFindReplace {
-            find: args.find,
-            replace: args.replace,
-            scope: args.scope.into(),
-        }],
+        operations: vec![Operation::ReviewTrackDelete { target }],
     })
 }
 
@@ -218,7 +223,7 @@ fn run_job(
     let job = match job_result {
         Ok(j) => j,
         Err(msg) => {
-            let envelope = builder.err::<EditResult>(&docli_core::DocliError::InvalidDocx {
+            let envelope = builder.err::<ReviewResult>(&docli_core::DocliError::InvalidDocx {
                 message: msg,
             });
             let _ = emit(&envelope, format, pretty);
@@ -227,8 +232,6 @@ fn run_job(
     };
 
     let op_count = job.operations.len();
-    // Job is validated and counted; actual operation application will be wired
-    // through PipelineHooks::apply_ops once the patch engine is integrated.
     let _job = job;
 
     let request = PipelineRequest {
@@ -241,7 +244,7 @@ fn run_job(
 
     match docli_core::run_shadow_pipeline(&request, PipelineHooks::default()) {
         Ok(result) => {
-            let data = EditResult {
+            let data = ReviewResult {
                 source: input.display().to_string(),
                 output: result.output.display().to_string(),
                 operations: op_count,
@@ -255,7 +258,7 @@ fn run_job(
             0
         }
         Err(e) => {
-            let envelope = builder.err::<EditResult>(&e);
+            let envelope = builder.err::<ReviewResult>(&e);
             let _ = emit(&envelope, format, pretty);
             1
         }
