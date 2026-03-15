@@ -4,6 +4,7 @@ use regex::Regex;
 use crate::{
     heading::resolve_heading_path,
     index::{DocumentIndex, ParagraphEntry},
+    story::StoryPartMap,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -13,8 +14,17 @@ pub struct ResolvedTarget {
     pub byte_spans: Vec<(usize, usize)>,
 }
 
-pub fn resolve(target: &Target, index: &DocumentIndex) -> Result<ResolvedTarget, DocliError> {
-    ensure_story_matches(target, index)?;
+/// Resolve a `Target` selector against a `DocumentIndex`.
+///
+/// `story_map` is optional. When provided it is used to validate that the
+/// target's `story` field corresponds to the same XML part as `index`. When
+/// `None` the check is skipped for non-Body stories (Body is always checked).
+pub fn resolve(
+    target: &Target,
+    index: &DocumentIndex,
+    story_map: Option<&StoryPartMap>,
+) -> Result<ResolvedTarget, DocliError> {
+    ensure_story_matches(target, index, story_map)?;
 
     match target {
         Target::Paragraph { paragraph, .. } => resolve_paragraphs([*paragraph], index),
@@ -82,6 +92,11 @@ pub fn resolve(target: &Target, index: &DocumentIndex) -> Result<ResolvedTarget,
                 .filter(|paragraph| paragraph.style.as_deref() == Some(style.as_str()))
                 .map(|paragraph| paragraph.index)
                 .collect::<Vec<_>>();
+            if matches.is_empty() {
+                return Err(DocliError::InvalidTarget {
+                    message: format!("no paragraphs found with style: {style}"),
+                });
+            }
             resolve_paragraphs(matches, index)
         }
         Target::Text {
@@ -117,7 +132,11 @@ pub fn resolve(target: &Target, index: &DocumentIndex) -> Result<ResolvedTarget,
     }
 }
 
-fn ensure_story_matches(target: &Target, index: &DocumentIndex) -> Result<(), DocliError> {
+fn ensure_story_matches(
+    target: &Target,
+    index: &DocumentIndex,
+    story_map: Option<&StoryPartMap>,
+) -> Result<(), DocliError> {
     let story = match target {
         Target::Paragraph { story, .. }
         | Target::Paragraphs { story, .. }
@@ -130,33 +149,31 @@ fn ensure_story_matches(target: &Target, index: &DocumentIndex) -> Result<(), Do
     };
 
     if let Some(story) = story {
-        let expected = story_part_path(story);
-        if expected != index.part_path {
-            return Err(DocliError::InvalidTarget {
-                message: format!(
-                    "target story {:?} does not map to {}",
-                    story, index.part_path
-                ),
-            });
+        // Determine the expected part path:
+        // - Body is always "word/document.xml"
+        // - Other stories use the map if available (actual filenames are
+        //   assigned by Word and are not guaranteed to follow header1/2/3.xml)
+        // - Without a map, non-Body story checks are skipped
+        let expected = match story {
+            Story::Body => Some("word/document.xml".to_string()),
+            other => story_map
+                .and_then(|m| m.path_for(other))
+                .map(str::to_string),
+        };
+
+        if let Some(expected) = expected {
+            if expected != index.part_path {
+                return Err(DocliError::InvalidTarget {
+                    message: format!(
+                        "target story {:?} does not map to {}",
+                        story, index.part_path
+                    ),
+                });
+            }
         }
     }
 
     Ok(())
-}
-
-fn story_part_path(story: &Story) -> String {
-    match story {
-        Story::Body => "word/document.xml".to_string(),
-        Story::HeaderDefault => "word/header1.xml".to_string(),
-        Story::HeaderFirst => "word/header2.xml".to_string(),
-        Story::HeaderEven => "word/header3.xml".to_string(),
-        Story::FooterDefault => "word/footer1.xml".to_string(),
-        Story::FooterFirst => "word/footer2.xml".to_string(),
-        Story::FooterEven => "word/footer3.xml".to_string(),
-        Story::Footnotes => "word/footnotes.xml".to_string(),
-        Story::Endnotes => "word/endnotes.xml".to_string(),
-        Story::Comments => "word/comments.xml".to_string(),
-    }
 }
 
 fn parse_range(range: &str) -> Result<(usize, usize), DocliError> {
@@ -291,7 +308,7 @@ mod tests {
     }
 
     fn assert_single_paragraph(target: Target, expected: usize) {
-        let resolved = resolve(&target, &index()).unwrap();
+        let resolved = resolve(&target, &index(), None).unwrap();
         assert_eq!(
             resolved,
             ResolvedTarget {
@@ -335,6 +352,7 @@ mod tests {
                 story: Story::Body,
             },
             &index(),
+            None,
         )
         .unwrap();
         assert_eq!(resolved.paragraph_indices, vec![1, 2]);
@@ -349,6 +367,7 @@ mod tests {
                 story: Story::Body,
             },
             &index(),
+            None,
         )
         .unwrap();
         assert_eq!(resolved.paragraph_indices, vec![1, 2, 3]);
@@ -379,14 +398,14 @@ mod tests {
 
     #[test]
     fn resolves_table_selector() {
-        let resolved = resolve(&Target::Table { table: 0 }, &index()).unwrap();
+        let resolved = resolve(&Target::Table { table: 0 }, &index(), None).unwrap();
         assert_eq!(resolved.paragraph_indices, vec![3]);
         assert_eq!(resolved.byte_spans.len(), 1);
     }
 
     #[test]
     fn resolves_image_selector() {
-        let resolved = resolve(&Target::Image { image: 0 }, &index()).unwrap();
+        let resolved = resolve(&Target::Image { image: 0 }, &index(), None).unwrap();
         assert_eq!(resolved.paragraph_indices, vec![4]);
     }
 
@@ -398,6 +417,7 @@ mod tests {
                 story: Story::Body,
             },
             &index(),
+            None,
         )
         .unwrap();
         assert_eq!(resolved.paragraph_indices, vec![3]);
@@ -413,6 +433,7 @@ mod tests {
                 story: Story::Body,
             },
             &index(),
+            None,
         )
         .unwrap();
         assert_eq!(resolved.paragraph_indices, vec![5]);
@@ -428,6 +449,7 @@ mod tests {
                 story: Story::Body,
             },
             &index(),
+            None,
         )
         .unwrap();
         assert_eq!(resolved.paragraph_indices, vec![3]);
@@ -462,6 +484,7 @@ mod tests {
                 story: Story::Body,
             },
             &index(),
+            None,
         )
         .unwrap();
         assert_eq!(resolved.paragraph_indices, vec![3]);

@@ -20,7 +20,20 @@ impl StoryPartMap {
             .xml_parts
             .get("word/_rels/document.xml.rels")
             .map(Vec::as_slice);
-        Self::from_bytes(document_xml, rels_xml)
+        let mut map = Self::from_bytes(document_xml, rels_xml)?;
+        // Footnotes, endnotes, and comments are optional parts. Remove them from
+        // the map when the corresponding XML part is absent from the package so
+        // that callers can rely on path_for() returning None for missing parts.
+        for (story, path) in [
+            (Story::Footnotes, "word/footnotes.xml"),
+            (Story::Endnotes, "word/endnotes.xml"),
+            (Story::Comments, "word/comments.xml"),
+        ] {
+            if !package.xml_parts.contains_key(path) {
+                map.parts.remove(&story);
+            }
+        }
+        Ok(map)
     }
 
     pub fn from_bytes(document_xml: &[u8], rels_xml: Option<&[u8]>) -> Result<Self, DocliError> {

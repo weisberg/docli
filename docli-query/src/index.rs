@@ -88,6 +88,12 @@ impl DocumentIndex {
         for node in document.descendants().filter(|node| node.is_element()) {
             match node.tag_name().name() {
                 "p" => {
+                    // Skip paragraphs inside table cells — they are not body-level
+                    // paragraphs and must not corrupt the paragraph index or
+                    // last_paragraph_index used for image/table anchoring.
+                    if node.ancestors().any(|ancestor| ancestor.has_tag_name("tbl")) {
+                        continue;
+                    }
                     let paragraph = build_paragraph_entry(&node, index.paragraphs.len())?;
                     if let Some(heading_level) = heading_level(&node) {
                         index.headings.push(HeadingEntry {
