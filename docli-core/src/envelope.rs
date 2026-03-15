@@ -17,7 +17,6 @@ pub struct OkEnvelope<T: Serialize> {
     pub ok: bool,
     pub command: String,
     pub data: T,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub warnings: Vec<String>,
     pub elapsed_ms: u64,
 }
@@ -27,7 +26,6 @@ pub struct ErrEnvelope {
     pub ok: bool,
     pub command: String,
     pub error: ErrorDetail,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub warnings: Vec<String>,
     pub elapsed_ms: u64,
 }

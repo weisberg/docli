@@ -93,12 +93,9 @@ impl DocliError {
 
 impl From<io::Error> for DocliError {
     fn from(source: io::Error) -> Self {
-        if source.kind() == io::ErrorKind::NotFound {
-            return Self::FileNotFound {
-                path: PathBuf::from(source.to_string()),
-            };
-        }
-
+        // io::Error does not carry the file path, so we cannot construct FileNotFound
+        // with a meaningful path here. Call sites that know the path must construct
+        // FileNotFound explicitly (as Package::open already does).
         Self::CommitFailed {
             message: source.to_string(),
         }

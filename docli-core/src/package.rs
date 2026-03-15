@@ -40,7 +40,7 @@ impl Package {
         }
 
         let source_hash = hash_file(&path)?;
-        let reader = File::open(&path).map_err(|source| DocliError::CommitFailed {
+        let reader = File::open(&path).map_err(|source| DocliError::InvalidDocx {
             message: source.to_string(),
         })?;
         let mut archive = ZipArchive::new(reader)?;
@@ -103,7 +103,7 @@ impl Package {
     }
 
     pub fn reopen_archive(&self) -> Result<ZipArchive<File>, DocliError> {
-        let file = File::open(&self.path).map_err(|source| DocliError::CommitFailed {
+        let file = File::open(&self.path).map_err(|source| DocliError::InvalidDocx {
             message: source.to_string(),
         })?;
         Ok(ZipArchive::new(file)?)
@@ -111,7 +111,7 @@ impl Package {
 }
 
 fn hash_file(path: &Path) -> Result<String, DocliError> {
-    let mut file = File::open(path).map_err(|source| DocliError::CommitFailed {
+    let mut file = File::open(path).map_err(|source| DocliError::InvalidDocx {
         message: source.to_string(),
     })?;
     let mut hasher = Sha256::new();

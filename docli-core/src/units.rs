@@ -87,4 +87,25 @@ mod tests {
     fn converts_dxa_to_inches() {
         assert_eq!(dxa_to_inches(2160), 1.5);
     }
+
+    // Spec-required canonical conversions (Appendix A)
+    #[test]
+    fn spec_1cm_is_567_dxa() {
+        assert_eq!(parse_dxa("1cm").unwrap(), 567);
+    }
+
+    #[test]
+    fn spec_1mm_is_57_dxa() {
+        assert_eq!(parse_dxa("1mm").unwrap(), 57);
+    }
+
+    #[test]
+    fn spec_1pt_is_20_dxa() {
+        assert_eq!(parse_dxa("1pt").unwrap(), 20);
+    }
+
+    #[test]
+    fn spec_1px_is_15_dxa() {
+        assert_eq!(parse_dxa("1px").unwrap(), 15);
+    }
 }
