@@ -1,3 +1,9 @@
-//! Phase 0 stub for knowledge-base resolution and templating.
+//! Knowledge-base resolution, rule loading, and template rendering.
 
-pub const CRATE_NAME: &str = "docli-kb";
+pub mod resolver;
+pub mod rules;
+pub mod template;
+
+pub use resolver::KbResolver;
+pub use rules::{load_all_rules, load_rule, Rule};
+pub use template::render_template;

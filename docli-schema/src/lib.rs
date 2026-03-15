@@ -1,3 +1,8 @@
-//! Phase 0 stub for validation and repair logic.
+//! Structural validation and repair for DOCX packages.
 
-pub const CRATE_NAME: &str = "docli-schema";
+pub mod invariants;
+pub mod redline;
+pub mod repair;
+pub mod structural;
+
+pub use structural::{Severity, ValidationIssue};
