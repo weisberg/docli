@@ -364,6 +364,12 @@ dependencies = [
  "docli-query",
  "docli-render",
  "docli-schema",
+ "roxmltree",
+ "schemars",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "zip 2.4.2",
 ]
 
 [[package]]
@@ -372,6 +378,7 @@ version = "0.1.0"
 dependencies = [
  "hex",
  "roxmltree",
+ "schemars",
  "serde",
  "serde_json",
  "sha2",
@@ -400,7 +407,9 @@ dependencies = [
  "minijinja",
  "regex",
  "serde",
+ "serde_json",
  "serde_yaml",
+ "tempfile",
 ]
 
 [[package]]
@@ -448,9 +457,12 @@ dependencies = [
  "docli-query",
  "ooxmlsdk",
  "quick-xml 0.36.2",
+ "roxmltree",
  "schemars",
  "serde",
+ "tempfile",
  "thiserror",
+ "zip 2.4.2",
 ]
 
 [[package]]

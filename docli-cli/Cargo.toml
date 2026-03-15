@@ -18,3 +18,9 @@ docli-patch = { path = "../docli-patch" }
 docli-query = { path = "../docli-query" }
 docli-render = { path = "../docli-render" }
 docli-schema = { path = "../docli-schema" }
+roxmltree.workspace = true
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+zip.workspace = true
