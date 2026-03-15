@@ -144,6 +144,61 @@ Keep the interface narrow and stable.
 - render artifacts such as PDF or PNG pages
 - a final Python report in JSON and Markdown
 
+## Symbiotic Architecture
+
+The most important design choice is that the Python layer should not behave
+like a second document engine. It should behave like an orchestration and
+assurance layer around `docli`.
+
+### Division Of Labor
+
+- `docli` owns package truth
+- `docli` owns OOXML mutation
+- `docli` owns atomic commit semantics
+- Python owns multi-pass interpretation
+- Python owns heavy policy, QA, and corpus-level analysis
+- Python can propose actions, but `docli` should execute the actual edits
+
+This means the relationship is symbiotic:
+
+- `docli` provides fast structured facts
+- Python turns those facts into higher-order judgments
+- Python can feed a report, a risk score, or an action plan back into `docli`
+
+### Three Operating Loops
+
+#### 1. Inner Loop: Fast Authoring
+
+This loop should stay almost entirely inside `docli`.
+
+- inspect
+- patch
+- validate
+- read
+
+The goal is low-latency iteration.
+
+#### 2. Outer Loop: Deep Final Check
+
+This is where Python should run.
+
+- consume one or more `docli` envelopes
+- run semantic, policy, and rendering checks
+- emit a combined report and release decision
+
+The goal is assurance, not speed.
+
+#### 3. Fleet Loop: Corpus Audit
+
+This is the most Python-native loop.
+
+- scan many documents
+- normalize results into a table or warehouse
+- compute recurring defects and trends
+- produce dashboards, scorecards, and upgrade priorities
+
+The goal is visibility across many documents, not one edit session.
+
 ## Example Workflow
 
 ### Fast Iteration Loop
@@ -239,6 +294,75 @@ Use that only when we need features such as:
 
 Those options either do not run on macOS or create an avoidable portability
 problem.
+
+## Research-Backed Option Map
+
+The Python landscape is not one library. It is a stack of specialized tools.
+
+| Option | Best Role | Why It Matters | Limitation |
+|---|---|---|---|
+| `python-docx` | light generation and editing | Good for common paragraphs, tables, styles, comments, and simple document assembly | not a full-fidelity Word engine |
+| `docxtpl` | template-first generation | Lets humans author `.docx` templates and Python fill them | not a general editing system |
+| `docx2python` | rich extraction and audit | Strong for pulling text, images, comments, footnotes, and document content into Python | extraction-oriented rather than mutation-oriented |
+| `mammoth` | semantic HTML review | Good for turning Word structure into review-friendly HTML | not layout-faithful for complex docs |
+| `pypandoc-binary` | conversion smoke tests | Useful when we want a portable Pandoc-backed conversion path on macOS | conversion model is not Word-native OOXML |
+| `unstructured` | element partitioning | Useful when we want typed elements like titles, narrative text, and list items | more analysis-focused than package-faithful |
+| `Docling` | experimental unified ingestion | Promising when we want one representation across DOCX, PDF, HTML, PPTX, and more | broader and heavier than a minimal companion |
+| `Aspose.Words for Python via .NET` | premium high-fidelity path | Best Mac-safe escalation when we need stronger revision and rendering fidelity | commercial dependency |
+
+## Recommended Dependency Tiers
+
+Not every installation should pull every package.
+
+### Tier 0: Always-On Core
+
+These should be considered the baseline companion stack.
+
+- `zipfile`
+- `lxml`
+- `pydantic`
+- `jsonschema`
+
+These support package inspection, validation, typed reports, and contract
+checking without creating a heavy runtime burden.
+
+### Tier 1: Standard Mac-First Companion
+
+These are the best default additions for a serious local workflow.
+
+- `docx2python`
+- `mammoth`
+- `pypandoc-binary`
+
+This tier gives us strong extraction, semantic review, and practical
+conversion checks on macOS.
+
+### Tier 2: Authoring And Template Support
+
+Add these only when the Python layer needs to create documents or fill
+templates.
+
+- `python-docx`
+- `docxtpl`
+
+### Tier 3: Advanced Analysis
+
+These are worth using when the Python layer starts doing richer content
+analysis or warehouse-style reporting.
+
+- `duckdb`
+- `opencv-python`
+- `pytesseract`
+- `unstructured`
+- `Docling`
+
+### Tier 4: Premium Fidelity
+
+This tier should be optional and explicitly approved.
+
+- `Aspose.Words for Python via .NET`
+
+This is the clean escalation path when open-source Python is no longer enough.
 
 ## Python Ecosystem To Leverage
 
