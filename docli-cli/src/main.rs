@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 mod commands;
 mod envelope;
 
-use commands::{doctor, inspect, kb, ooxml, read, schema, validate};
+use commands::{create, doctor, inspect, kb, ooxml, read, schema, template, validate};
 
 #[derive(Parser)]
 #[command(name = "docli", version, about = "DOCX document intelligence CLI")]
@@ -36,6 +36,11 @@ enum Commands {
     Doctor(doctor::DoctorArgs),
     /// Read and render document content
     Read(read::ReadArgs),
+    /// Create a new DOCX from a YAML spec
+    Create(create::CreateArgs),
+    /// Template operations (list, get, render)
+    #[command(subcommand)]
+    Template(template::TemplateCommand),
 }
 
 fn main() {
@@ -49,6 +54,8 @@ fn main() {
         Commands::Schema(args) => schema::run(args, &cli.format, cli.pretty),
         Commands::Doctor(args) => doctor::run(args, &cli.format, cli.pretty),
         Commands::Read(args) => read::run(args, &cli.format, cli.pretty),
+        Commands::Create(args) => create::run(args, &cli.format, cli.pretty),
+        Commands::Template(cmd) => template::run(cmd, &cli.format, cli.pretty),
     };
 
     std::process::exit(exit_code);
