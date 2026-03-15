@@ -1,3 +1,12 @@
-//! Phase 0 stub for OOXML patching and tracked-change editing.
+//! OOXML patching engine for docli.
 
-pub const CRATE_NAME: &str = "docli-patch";
+pub mod id_alloc;
+pub mod normalize;
+pub mod part_graph;
+pub mod relationships;
+pub mod run_split;
+pub mod runs;
+
+pub use id_alloc::IdAllocator;
+pub use part_graph::{PartData, PartGraph};
+pub use run_split::{split_runs_at_offsets, RunFragment, SplitResult};
