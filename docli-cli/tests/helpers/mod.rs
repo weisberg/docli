@@ -1,4 +1,5 @@
 //! Programmatic DOCX fixture builders for integration tests.
+#![allow(dead_code)]
 
 use std::fs::File;
 use std::io::Write;

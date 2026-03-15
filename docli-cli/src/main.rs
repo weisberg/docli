@@ -3,7 +3,10 @@ use clap::{Parser, Subcommand};
 mod commands;
 mod envelope;
 
-use commands::{create, doctor, inspect, kb, ooxml, read, schema, template, validate};
+use commands::{
+    convert, create, diff, doctor, edit, extract, finalize, inspect, kb, merge, ooxml, read,
+    review, run, schema, template, validate,
+};
 
 #[derive(Parser)]
 #[command(name = "docli", version, about = "DOCX document intelligence CLI")]
@@ -41,6 +44,26 @@ enum Commands {
     /// Template operations (list, get, render)
     #[command(subcommand)]
     Template(template::TemplateCommand),
+    /// Edit operations (replace, insert, delete, find-replace)
+    #[command(subcommand)]
+    Edit(edit::EditCommand),
+    /// Run a batch job file (YAML or JSON)
+    Run(run::RunArgs),
+    /// Review operations (comment, track-replace, track-insert, track-delete)
+    #[command(subcommand)]
+    Review(review::ReviewCommand),
+    /// Finalize tracked changes (accept, reject, strip)
+    #[command(subcommand)]
+    Finalize(finalize::FinalizeCommand),
+    /// Semantic diff between two DOCX files
+    Diff(diff::DiffArgs),
+    /// Convert a DOCX to another format
+    Convert(convert::ConvertArgs),
+    /// Extract content from a DOCX file
+    #[command(subcommand)]
+    Extract(extract::ExtractCommand),
+    /// Merge two DOCX files
+    Merge(merge::MergeArgs),
 }
 
 fn main() {
@@ -56,6 +79,14 @@ fn main() {
         Commands::Read(args) => read::run(args, &cli.format, cli.pretty),
         Commands::Create(args) => create::run(args, &cli.format, cli.pretty),
         Commands::Template(cmd) => template::run(cmd, &cli.format, cli.pretty),
+        Commands::Edit(cmd) => edit::run(cmd, &cli.format, cli.pretty),
+        Commands::Run(args) => run::run(args, &cli.format, cli.pretty),
+        Commands::Review(cmd) => review::run(cmd, &cli.format, cli.pretty),
+        Commands::Finalize(cmd) => finalize::run(cmd, &cli.format, cli.pretty),
+        Commands::Diff(args) => diff::run(args, &cli.format, cli.pretty),
+        Commands::Convert(args) => convert::run(args, &cli.format, cli.pretty),
+        Commands::Extract(cmd) => extract::run(cmd, &cli.format, cli.pretty),
+        Commands::Merge(args) => merge::run(args, &cli.format, cli.pretty),
     };
 
     std::process::exit(exit_code);
