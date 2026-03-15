@@ -370,12 +370,14 @@ dependencies = [
 name = "docli-core"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "hex",
+ "roxmltree",
  "serde",
  "serde_json",
  "sha2",
+ "tempfile",
  "thiserror",
+ "zip 2.4.2",
 ]
 
 [[package]]
@@ -419,9 +421,12 @@ name = "docli-query"
 version = "0.1.0"
 dependencies = [
  "docli-core",
+ "hex",
  "quick-xml 0.36.2",
+ "regex",
  "roxmltree",
  "serde",
+ "sha2",
 ]
 
 [[package]]
