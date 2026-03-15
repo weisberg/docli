@@ -9,5 +9,6 @@ version.workspace = true
 docli-core = { path = "../docli-core" }
 docli-query = { path = "../docli-query" }
 anyhow.workspace = true
+serde.workspace = true
 similar.workspace = true
 tempfile.workspace = true
