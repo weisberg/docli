@@ -421,9 +421,12 @@ name = "docli-query"
 version = "0.1.0"
 dependencies = [
  "docli-core",
+ "hex",
  "quick-xml 0.36.2",
+ "regex",
  "roxmltree",
  "serde",
+ "sha2",
 ]
 
 [[package]]
