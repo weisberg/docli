@@ -1,3 +1,9 @@
-//! Phase 0 stub for greenfield document creation backends.
+//! Greenfield document creation for docli.
 
-pub const CRATE_NAME: &str = "docli-create";
+pub mod backend;
+pub mod docx_rs_backend;
+pub mod spec;
+
+pub use backend::CreateBackend;
+pub use docx_rs_backend::DocxRsBackend;
+pub use spec::CreateSpec;

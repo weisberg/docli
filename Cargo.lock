@@ -396,7 +396,9 @@ dependencies = [
  "docli-kb",
  "docx-rs",
  "serde",
+ "serde_json",
  "serde_yaml",
+ "tempfile",
  "thiserror",
 ]
 
@@ -447,6 +449,7 @@ dependencies = [
  "anyhow",
  "docli-core",
  "docli-query",
+ "serde",
  "similar",
  "tempfile",
 ]
