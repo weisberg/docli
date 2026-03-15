@@ -6,7 +6,7 @@ pub mod repair;
 pub mod structural;
 
 pub use invariants::check_invariants;
-pub use redline::validate_redlines;
+pub use redline::{check_redline, validate_redlines};
 pub use repair::{ensure_xml_space_preserve, repair_durable_id_overflow};
 pub use structural::validate_structure;
 
