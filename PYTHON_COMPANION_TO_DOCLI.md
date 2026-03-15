@@ -173,6 +173,73 @@ python tools/docli_companion.py final-check \
 
 That gives us a cheap inner loop and an expensive outer gate.
 
+## Mac-First Recommendation
+
+If this companion must be reliable on macOS and remain multi-platform, the
+default stack should avoid Windows-only automation and avoid assuming Microsoft
+Word is installed.
+
+### Approved Default Stack
+
+- `zipfile` + `lxml` for package inspection, raw OOXML validation, and final
+  part-level audits
+- `docx2python` for structured extraction, including text, images, comments,
+  footnotes, and other review-friendly content
+- `python-docx` for light document generation and simple edits
+- `docxtpl` for template-driven generation from human-authored `.docx`
+  templates
+- `mammoth` for semantic HTML conversion and human-reviewable output
+- `pypandoc-binary` for conversion smoke tests on macOS without adding a
+  separate Pandoc install burden
+
+This is the best default because it stays cross-platform, works well on modern
+Mac hardware, and keeps us inside libraries that are practical to install in
+CI and on developer laptops.
+
+### What This Stack Is Good At
+
+- final validation and policy checks
+- structured extraction for QA and analysis
+- template-based document generation
+- semantic review and lightweight conversion checks
+- repository-wide auditing and report generation
+
+### What This Stack Is Not Good At
+
+- Word-perfect tracked-revision workflows
+- full-fidelity layout editing
+- complete coverage of advanced WordprocessingML features
+- exact parity with Microsoft Word behavior
+
+Open-source Python on macOS is good enough for validation and extraction. It is
+not the right place to promise perfect Word-native editing fidelity.
+
+### Mac-Safe Escalation Path
+
+If we decide we need higher-fidelity review or rendering behavior on macOS, the
+best escalation path is a commercial SDK instead of Windows automation.
+
+Recommended escalation:
+
+- `Aspose.Words for Python via .NET`
+
+Use that only when we need features such as:
+
+- stronger tracked-changes handling
+- richer comment/revision workflows
+- higher-fidelity rendering and format conversion
+- broader coverage of complex Word document features
+
+### What To Avoid For A Mac-First Design
+
+- `pywin32` and COM automation
+- any workflow that requires Microsoft Word to be installed
+- making LibreOffice the primary edit engine
+- building the core architecture around Windows-only APIs
+
+Those options either do not run on macOS or create an avoidable portability
+problem.
+
 ## Python Ecosystem To Leverage
 
 The companion should use Python where the ecosystem is clearly stronger.
