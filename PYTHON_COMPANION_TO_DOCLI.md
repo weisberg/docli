@@ -385,9 +385,15 @@ The companion should use Python where the ecosystem is clearly stronger.
 ### Data and Heuristic Analysis
 
 - `pandas` for large batch reports
+- `duckdb` for local analytics over many final-check artifacts
 - `rapidfuzz` for approximate heading or phrase matching
 - `regex` for advanced style or policy scanning
 - `networkx` if document structure graphs become useful
+
+### Document Intelligence And Partitioning
+
+- `unstructured` for typed element extraction
+- `Docling` for broader cross-format ingestion and unified representations
 
 ### Rendering and Final QA
 
@@ -395,6 +401,11 @@ The companion should use Python where the ecosystem is clearly stronger.
 - `Pillow` and `opencv-python` for page image comparison
 - `pytesseract` if OCR-based checks are needed
 - `matplotlib` or `plotly` for QA dashboards
+
+### Premium Fidelity
+
+- `Aspose.Words for Python via .NET` for the Mac-safe high-fidelity escalation
+  path when open-source capabilities are no longer sufficient
 
 ## Suggested Python Companion Modes
 
@@ -425,6 +436,253 @@ Focuses on PDF conversion, page rasterization, and visual drift detection.
 
 Runs domain-specific rules that should not be embedded into the Rust binary.
 
+### `propose-fix`
+
+Produces a structured action plan for `docli` rather than mutating the package
+directly. The Python layer diagnoses; `docli` executes.
+
+### `corpus-audit`
+
+Scans many documents, stores normalized facts, and computes failure patterns
+across a whole body of work rather than one file at a time.
+
+### `render-check`
+
+Converts, rasterizes, compares, and summarizes layout or typography drift using
+rendered artifacts instead of only OOXML-level structure.
+
+## Bold Ideas Worth Adding
+
+The strongest version of the companion is not just a validator. It is a Python
+intelligence layer that can look at documents from several angles and then feed
+decisions back into `docli`.
+
+### 1. The Shadow Committee
+
+Run multiple parsers over the same document and treat disagreement as signal.
+
+Possible members:
+
+- `docli inspect` for package-faithful structure
+- `docx2python` for extraction-focused content recovery
+- `mammoth` for semantic HTML interpretation
+- `unstructured` for typed elements
+- `Docling` for a broader unified document representation
+
+This creates a powerful final-check pattern:
+
+- if all parsers agree, confidence is high
+- if only one parser sees a heading, table, or comment, confidence drops
+- if semantic extraction diverges from OOXML facts, the report should flag it
+
+This is bold because it turns library disagreement into a detection mechanism
+instead of a bug.
+
+### 2. Render And Read Back
+
+Do not trust structure alone. Render the document and inspect the output that a
+human would actually read.
+
+Pipeline:
+
+1. `docli` produces the candidate `.docx`
+2. Python converts the document to PDF or HTML
+3. Python rasterizes pages where needed
+4. OCR and visual checks confirm that headings, footnotes, tables, and visible
+   content match expectations
+
+This catches classes of bugs that OOXML validation will miss:
+
+- white-on-white text
+- off-page content
+- broken pagination
+- missing glyphs or substituted fonts
+- table overflow and clipping
+
+### 3. Python As Planner, Rust As Actor
+
+The companion should be allowed to recommend repairs without becoming the edit
+engine.
+
+Pattern:
+
+- Python analyzes a document
+- Python emits a typed remediation plan
+- `docli` applies the plan atomically
+- Python reruns validation
+
+This is the cleanest symbiosis in the whole design.
+
+The plan can contain:
+
+- section insertions to request from templates
+- replacement targets
+- style normalization suggestions
+- metadata repairs
+- review comments to insert
+
+### 4. A Document Warehouse
+
+Treat document QA as data engineering.
+
+Store normalized outputs from `docli` and the companion in Parquet and query
+them with DuckDB. This makes cross-document analysis cheap and reproducible.
+
+Examples:
+
+- most common validation failures by template family
+- heading drift by team or author
+- average table density by report type
+- comment volume before release
+- tracked-change leakage rate over time
+
+This is the right way to make the companion useful at organization scale rather
+than only file-by-file.
+
+### 5. Confidence-Weighted Decisions
+
+The companion should not force every check into a binary pass/fail if the
+signal is probabilistic.
+
+Instead, produce:
+
+- hard failures
+- soft warnings
+- confidence scores
+- evidence snippets
+- recommended next action
+
+That lets us treat some checks as release blockers and others as triage inputs.
+
+### 6. Domain Packs
+
+The Python layer is the right home for heavyweight domain packs that would be
+too large or too volatile to compile into `docli`.
+
+Possible packs:
+
+- regulated-report pack
+- academic-manuscript pack
+- legal-brief pack
+- board-deck narrative pack
+- accessibility pack
+
+Each pack can add:
+
+- policy rules
+- extraction heuristics
+- required section schemas
+- report templates
+- severity thresholds
+
+### 7. Golden Corpus Regression
+
+Maintain a set of canonical Word documents that represent the hard cases:
+
+- dense tables
+- tracked changes
+- comments and replies
+- floating images
+- section breaks
+- headers and footers
+- footnotes and endnotes
+
+Every upgrade to `docli` or the Python stack should rerun the same final-check
+bundle on this corpus. This creates a practical guardrail against accidental
+fidelity regressions.
+
+### 8. Air-Gapped Heavy Mode
+
+The companion should support a mode that runs fully offline for sensitive
+documents.
+
+This is where local-capable tools matter:
+
+- `docli`
+- `lxml`
+- `docx2python`
+- `mammoth`
+- `Docling`
+- local OCR tools
+- local DuckDB databases
+
+The architecture should not require a cloud API to perform high-value checks.
+
+### 9. Optional LLM Advisory Layer
+
+If we ever add an LLM step, it should remain advisory and typed.
+
+Rules:
+
+- the model never edits OOXML directly
+- the model never bypasses `docli`
+- every model output must validate into a typed Python schema
+- all hard release decisions still depend on deterministic evidence
+
+Good uses:
+
+- summarizing the report for humans
+- suggesting likely causes for a failure cluster
+- drafting remediation notes
+- generating candidate `docli` action plans for review
+
+Bad uses:
+
+- silently rewriting documents
+- making the release decision without evidence
+- becoming the primary parser
+
+## Companion Artifact Bundle
+
+The Python layer should emit more than a pass/fail bit.
+
+For each run, we should aim to capture a small artifact bundle:
+
+- `report.json`
+- `report.md`
+- `inspect.json`
+- `validate.json`
+- optional `semantic.html`
+- optional `render.pdf`
+- optional page images
+- optional `facts.parquet`
+
+This makes every final-check run inspectable and reproducible.
+
+### Suggested Report Sections
+
+- document identity
+- tool versions
+- source file hashes
+- hard failures
+- warnings
+- confidence summary
+- parser disagreement summary
+- rendering summary
+- recommended next action
+
+## Decision Model
+
+The companion should make it obvious how a result should be interpreted.
+
+### Release States
+
+- `pass`
+- `pass-with-warnings`
+- `manual-review`
+- `fail`
+
+### Evidence Classes
+
+- deterministic structural evidence
+- deterministic policy evidence
+- extraction disagreement
+- rendering evidence
+- OCR evidence
+- advisory model evidence
+
+Deterministic evidence should always outrank probabilistic evidence.
+
 ## What Should Stay Out Of Python
 
 To avoid architectural drift, the companion should not become the real engine.
@@ -442,27 +700,54 @@ behavioral drift will undo the main point of `docli`.
 
 ## Implementation Guidance
 
-If we build this, the first version should stay narrow.
+If we build this, the implementation should deepen in layers instead of trying
+to solve every problem at once.
 
-### Phase 1
+### Milestone 1: Typed Final Check
 
 - create `tools/docli_companion.py`
 - shell out to `docli`
 - read `docli` JSON envelopes
+- validate all companion outputs with `pydantic`
 - emit a combined JSON and Markdown report
 - focus on `final-check` for one document
 
-### Phase 2
+### Milestone 2: Rich Extraction And Semantic Review
 
-- add PDF-based visual checks
-- add policy packs loaded from YAML
-- add batch processing and summary artifacts
+- add `docx2python`
+- add `mammoth`
+- add parser disagreement checks
+- add section-schema and content-policy packs
+- emit review-friendly HTML snippets where useful
 
-### Phase 3
+### Milestone 3: Rendering And Visual QA
 
-- integrate into CI
-- store historical QA reports
-- compare document quality across revisions
+- add PDF conversion checks
+- add rasterized page comparisons
+- add OCR-assisted verification for visible text
+- promote render-based failures to first-class evidence
+
+### Milestone 4: Corpus Intelligence
+
+- store normalized facts in Parquet
+- query audits with DuckDB
+- add dashboards and scorecards
+- track failure classes across time, team, and template
+
+### Milestone 5: Action Plans And Assisted Remediation
+
+- emit typed fix proposals
+- map fix proposals to `docli` operations
+- allow a human or agent to approve application
+- rerun final-check automatically after repair
+
+### Milestone 6: Premium Fidelity Option
+
+- add an optional `Aspose` backend only if open-source fidelity proves
+  insufficient
+- keep that backend isolated behind a feature flag or install extra
+- continue to prefer `docli` as the mutation layer even if premium inspection
+  is enabled
 
 ## Recommended Operating Model
 
